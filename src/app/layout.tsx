@@ -5,9 +5,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Canopy - Grow Smarter",
+  title: "Kay - The AI Employee for Customer Support",
   description:
-    "Canopy helps teams make better decisions, faster. Sign up for early access.",
+    "Kay resolves support tickets end-to-end. Plugs into Zendesk, costs $1 per resolution. Zero tickets, zero cost. Join the waitlist.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,6 +1,6 @@
-# Canopy
+# Kay
 
-Early-stage product. Landing page and lead capture.
+The AI employee for customer support. Landing page and waitlist.
 
 ## Stack
 

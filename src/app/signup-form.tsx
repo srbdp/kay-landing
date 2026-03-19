@@ -46,19 +46,19 @@ export function SignupForm() {
           setEmail(e.target.value);
           if (status !== "idle" && status !== "loading") setStatus("idle");
         }}
-        className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-600/20"
+        className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
         disabled={status === "loading"}
       />
       <button
         type="submit"
         disabled={status === "loading"}
-        className="rounded-lg bg-green-600 px-6 py-3 font-medium text-white transition hover:bg-green-700 disabled:opacity-60"
+        className="rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition hover:bg-indigo-700 disabled:opacity-60"
       >
-        {status === "loading" ? "Joining..." : "Get Early Access"}
+        {status === "loading" ? "Joining..." : "Join the Waitlist"}
       </button>
       {(status === "success" || status === "error") && (
         <p
-          className={`absolute mt-14 text-sm sm:mt-16 ${status === "success" ? "text-green-600" : "text-red-500"}`}
+          className={`absolute mt-14 text-sm sm:mt-16 ${status === "success" ? "text-indigo-600" : "text-red-500"}`}
         >
           {message}
         </p>
