@@ -5,8 +5,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Canopy",
-  description: "Coming soon",
+  title: "Canopy - Grow Smarter",
+  description:
+    "Canopy helps teams make better decisions, faster. Sign up for early access.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
