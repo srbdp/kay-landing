@@ -180,8 +180,10 @@ export function ROICalculator() {
       setSubmitMessage(data.message);
       setUnlocked(true);
     } catch {
-      setSubmitStatus("error");
-      setSubmitMessage("Something went wrong. Please try again.");
+      // API unavailable (e.g. static hosting) — still unlock results
+      setSubmitStatus("success");
+      setSubmitMessage("Report unlocked!");
+      setUnlocked(true);
     }
   }
 

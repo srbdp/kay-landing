@@ -1,11 +1,9 @@
 import type { NextConfig } from "next";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
-  outputFileTracingRoot: __dirname,
+  output: "export",
+  basePath: process.env.PAGES_BASE_PATH || "",
+  images: { unoptimized: true },
 };
 
 export default nextConfig;

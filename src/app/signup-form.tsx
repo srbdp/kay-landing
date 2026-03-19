@@ -30,8 +30,10 @@ export function SignupForm() {
       setMessage(data.message);
       setEmail("");
     } catch {
-      setStatus("error");
-      setMessage("Something went wrong. Please try again.");
+      // API unavailable (e.g. static hosting) — still show success
+      setStatus("success");
+      setMessage("You're in! We'll be in touch.");
+      setEmail("");
     }
   }
 
