@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 
-const SIGNUPS_FILE = path.join(process.cwd(), "data", "signups.json");
+const isVercel = !!process.env.VERCEL;
+const SIGNUPS_FILE = isVercel
+  ? path.join("/tmp", "signups.json")
+  : path.join(process.cwd(), "data", "signups.json");
 
 interface Signup {
   email: string;
