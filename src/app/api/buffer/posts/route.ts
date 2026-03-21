@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createUpdate, getPendingUpdates, getSentUpdates } from "@/lib/buffer";
+import { listPosts, createPost } from "@/lib/buffer";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
-    const profileId = searchParams.get("profile_id");
-    if (!profileId) {
-      return NextResponse.json({ error: "profile_id is required" }, { status: 400 });
+    const channelId = searchParams.get("channel_id");
+    if (!channelId) {
+      return NextResponse.json({ error: "channel_id is required" }, { status: 400 });
     }
-    const filter = searchParams.get("filter") ?? "pending";
-    const page = Number(searchParams.get("page") ?? "1");
+    const status = searchParams.get("status") ?? "pending";
     const count = Number(searchParams.get("count") ?? "20");
 
-    const data =
-      filter === "sent"
-        ? await getSentUpdates(profileId, { page, count })
-        : await getPendingUpdates(profileId, { page, count });
-
-    return NextResponse.json(data);
+    const result = await listPosts(channelId, { status, first: count });
+    return NextResponse.json({ posts: result.posts, total: result.posts.length });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },
@@ -29,14 +24,21 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { profile_ids, text, media, scheduled_at, now, top } = body;
+    const { channel_ids, text, dueAt, now } = body;
 
-    if (!profile_ids || !Array.isArray(profile_ids) || profile_ids.length === 0) {
-      return NextResponse.json({ error: "profile_ids[] is required" }, { status: 400 });
+    if (!channel_ids || !Array.isArray(channel_ids) || channel_ids.length === 0) {
+      return NextResponse.json({ error: "channel_ids[] is required" }, { status: 400 });
+    }
+    if (!text) {
+      return NextResponse.json({ error: "text is required" }, { status: 400 });
     }
 
-    const result = await createUpdate({ profile_ids, text, media, scheduled_at, now, top });
-    return NextResponse.json(result, { status: 201 });
+    const posts = [];
+    for (const channelId of channel_ids) {
+      const result = await createPost({ channelId, text, dueAt, now });
+      posts.push(result.post);
+    }
+    return NextResponse.json({ success: true, posts }, { status: 201 });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },

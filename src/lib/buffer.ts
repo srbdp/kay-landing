@@ -29,7 +29,7 @@ async function gql<T>(query: string, variables?: Record<string, unknown>): Promi
   return json.data;
 }
 
-// --- Organization (needed for channel/post queries) ---
+// --- Organization ---
 
 let cachedOrgId: string | null = null;
 
@@ -50,7 +50,7 @@ async function getOrganizationId(): Promise<string> {
   return cachedOrgId;
 }
 
-// --- Channels (replaces Profiles) ---
+// --- Channels ---
 
 export interface BufferChannel {
   id: string;
@@ -60,9 +60,6 @@ export interface BufferChannel {
   isLocked: boolean;
   [key: string]: unknown;
 }
-
-// Keep old name as alias for backward compat in routes
-export type BufferProfile = BufferChannel;
 
 export async function listChannels(): Promise<BufferChannel[]> {
   const orgId = await getOrganizationId();
@@ -97,11 +94,7 @@ export async function getChannel(channelId: string): Promise<BufferChannel> {
   return data.channel;
 }
 
-// Backward-compat aliases
-export const listProfiles = listChannels;
-export const getProfile = getChannel;
-
-// --- Posts (replaces Updates) ---
+// --- Posts ---
 
 export interface BufferPost {
   id: string;
@@ -112,9 +105,6 @@ export interface BufferPost {
   channelId: string;
   [key: string]: unknown;
 }
-
-// Backward-compat alias
-export type BufferUpdate = BufferPost;
 
 export async function listPosts(
   channelId?: string,
@@ -158,23 +148,6 @@ export async function listPosts(
   };
 }
 
-// Backward-compat wrappers
-export async function getPendingUpdates(
-  channelId: string,
-  params?: { page?: number; count?: number },
-): Promise<{ updates: BufferPost[]; total: number }> {
-  const result = await listPosts(channelId, { status: "pending", first: params?.count ?? 20 });
-  return { updates: result.posts, total: result.posts.length };
-}
-
-export async function getSentUpdates(
-  channelId: string,
-  params?: { page?: number; count?: number },
-): Promise<{ updates: BufferPost[]; total: number }> {
-  const result = await listPosts(channelId, { status: "sent", first: params?.count ?? 20 });
-  return { updates: result.posts, total: result.posts.length };
-}
-
 export async function getPost(postId: string): Promise<BufferPost> {
   const data = await gql<{ post: BufferPost }>(
     `query GetPost($input: PostInput!) {
@@ -192,25 +165,12 @@ export async function getPost(postId: string): Promise<BufferPost> {
   return data.post;
 }
 
-// Backward-compat alias
-export const getUpdate = getPost;
-
 export interface CreatePostInput {
   channelId: string;
   text: string;
   dueAt?: string;
   now?: boolean;
 }
-
-// Backward-compat alias
-export type CreateUpdateInput = {
-  profile_ids: string[];
-  text?: string;
-  media?: Record<string, string>;
-  scheduled_at?: string;
-  now?: boolean;
-  top?: boolean;
-};
 
 export async function createPost(input: CreatePostInput): Promise<{ success: boolean; post: BufferPost }> {
   const mutationInput: Record<string, unknown> = {
@@ -240,23 +200,6 @@ export async function createPost(input: CreatePostInput): Promise<{ success: boo
   return { success: true, post: data.createPost.post };
 }
 
-// Backward-compat wrapper: accepts old-style profile_ids[] input
-export async function createUpdate(
-  input: CreateUpdateInput,
-): Promise<{ success: boolean; updates: BufferPost[] }> {
-  const posts: BufferPost[] = [];
-  for (const channelId of input.profile_ids) {
-    const result = await createPost({
-      channelId,
-      text: input.text ?? "",
-      dueAt: input.scheduled_at,
-      now: input.now,
-    });
-    posts.push(result.post);
-  }
-  return { success: true, updates: posts };
-}
-
 export async function deletePost(postId: string): Promise<{ success: boolean }> {
   await gql<{ deletePost: { success: boolean } }>(
     `mutation DeletePost($input: DeletePostInput!) {
@@ -267,24 +210,4 @@ export async function deletePost(postId: string): Promise<{ success: boolean }> 
     { input: { id: postId } },
   );
   return { success: true };
-}
-
-// Backward-compat alias
-export const deleteUpdate = deletePost;
-
-// Note: editUpdate and shareUpdate are not supported in the new Buffer API beta.
-// editUpdate will throw; shareUpdate is replaced by createPost with mode "shareNow".
-export async function editUpdate(
-  _updateId: string,
-  _input: { text: string; media?: Record<string, string>; scheduled_at?: string; now?: boolean },
-): Promise<{ success: boolean; update: BufferPost }> {
-  throw new Error("Editing posts is not yet supported by the new Buffer API. Delete and recreate instead.");
-}
-
-export async function shareUpdate(updateId: string): Promise<{ success: boolean }> {
-  // In the new API, there's no separate "share" action.
-  // Posts are published based on their mode (shareNow, addToQueue, etc.)
-  throw new Error(
-    `Share action is not supported in the new Buffer API. Post ${updateId} should be created with mode "shareNow" instead.`,
-  );
 }
