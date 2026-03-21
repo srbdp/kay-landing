@@ -1,4 +1,4 @@
-const BASE_URL = "https://api.bufferapp.com/1";
+const BASE_URL = "https://api.buffer.com";
 
 function getAccessToken(): string {
   const token = process.env.BUFFER_ACCESS_TOKEN;
@@ -6,143 +6,285 @@ function getAccessToken(): string {
   return token;
 }
 
-function url(path: string): string {
-  const sep = path.includes("?") ? "&" : "?";
-  return `${BASE_URL}${path}${sep}access_token=${getAccessToken()}`;
-}
-
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url(path), {
-    ...options,
-    headers: { "Content-Type": "application/x-www-form-urlencoded", ...options?.headers },
+async function gql<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
+  const res = await fetch(BASE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+    body: JSON.stringify({ query, variables }),
   });
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`Buffer API ${res.status}: ${body}`);
   }
-  return res.json() as Promise<T>;
+  const json = (await res.json()) as { data?: T; errors?: { message: string }[] };
+  if (json.errors?.length) {
+    throw new Error(`Buffer GraphQL: ${json.errors.map((e) => e.message).join("; ")}`);
+  }
+  if (!json.data) {
+    throw new Error("Buffer API returned no data");
+  }
+  return json.data;
 }
 
-// --- Profiles ---
+// --- Organization (needed for channel/post queries) ---
 
-export interface BufferProfile {
+let cachedOrgId: string | null = null;
+
+async function getOrganizationId(): Promise<string> {
+  if (cachedOrgId) return cachedOrgId;
+  const data = await gql<{ account: { organizations: { id: string }[] } }>(`
+    query GetOrganizations {
+      account {
+        organizations {
+          id
+        }
+      }
+    }
+  `);
+  const orgs = data.account.organizations;
+  if (!orgs.length) throw new Error("No Buffer organizations found");
+  cachedOrgId = orgs[0].id;
+  return cachedOrgId;
+}
+
+// --- Channels (replaces Profiles) ---
+
+export interface BufferChannel {
   id: string;
+  name: string;
   service: string;
-  formatted_username: string;
   avatar: string;
-  default: boolean;
+  isLocked: boolean;
   [key: string]: unknown;
 }
 
-export async function listProfiles(): Promise<BufferProfile[]> {
-  return request<BufferProfile[]>("/profiles.json");
+// Keep old name as alias for backward compat in routes
+export type BufferProfile = BufferChannel;
+
+export async function listChannels(): Promise<BufferChannel[]> {
+  const orgId = await getOrganizationId();
+  const data = await gql<{ channels: BufferChannel[] }>(
+    `query ListChannels($input: ChannelsInput!) {
+      channels(input: $input) {
+        id
+        name
+        service
+        avatar
+        isLocked
+      }
+    }`,
+    { input: { organizationId: orgId } },
+  );
+  return data.channels;
 }
 
-export async function getProfile(profileId: string): Promise<BufferProfile> {
-  return request<BufferProfile>(`/profiles/${profileId}.json`);
+export async function getChannel(channelId: string): Promise<BufferChannel> {
+  const data = await gql<{ channel: BufferChannel }>(
+    `query GetChannel($input: ChannelInput!) {
+      channel(input: $input) {
+        id
+        name
+        service
+        avatar
+        isLocked
+      }
+    }`,
+    { input: { id: channelId } },
+  );
+  return data.channel;
 }
 
-// --- Updates (Posts) ---
+// Backward-compat aliases
+export const listProfiles = listChannels;
+export const getProfile = getChannel;
 
-export interface BufferUpdate {
+// --- Posts (replaces Updates) ---
+
+export interface BufferPost {
   id: string;
   text: string;
   status: string;
-  created_at: number;
-  due_at: number;
-  profile_id: string;
-  media: Record<string, string>;
+  createdAt: string;
+  dueAt: string | null;
+  channelId: string;
   [key: string]: unknown;
 }
 
-interface UpdatesResponse {
-  updates: BufferUpdate[];
-  total: number;
+// Backward-compat alias
+export type BufferUpdate = BufferPost;
+
+export async function listPosts(
+  channelId?: string,
+  params?: { status?: string; first?: number; after?: string },
+): Promise<{ posts: BufferPost[]; hasNextPage: boolean; endCursor: string | null }> {
+  const orgId = await getOrganizationId();
+  const input: Record<string, unknown> = { organizationId: orgId };
+  if (channelId) input.channelIds = [channelId];
+  if (params?.status) input.status = params.status;
+
+  const data = await gql<{
+    posts: {
+      edges: { node: BufferPost }[];
+      pageInfo: { hasNextPage: boolean; endCursor: string | null };
+    };
+  }>(
+    `query ListPosts($input: PostsInput!, $first: Int, $after: String) {
+      posts(input: $input, first: $first, after: $after) {
+        edges {
+          node {
+            id
+            text
+            status
+            createdAt
+            dueAt
+            channelId
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }`,
+    { input, first: params?.first ?? 20, after: params?.after ?? null },
+  );
+  return {
+    posts: data.posts.edges.map((e) => e.node),
+    hasNextPage: data.posts.pageInfo.hasNextPage,
+    endCursor: data.posts.pageInfo.endCursor,
+  };
 }
 
+// Backward-compat wrappers
 export async function getPendingUpdates(
-  profileId: string,
+  channelId: string,
   params?: { page?: number; count?: number },
-): Promise<UpdatesResponse> {
-  const qs = new URLSearchParams();
-  if (params?.page) qs.set("page", String(params.page));
-  if (params?.count) qs.set("count", String(params.count));
-  const q = qs.toString();
-  return request<UpdatesResponse>(
-    `/profiles/${profileId}/updates/pending.json${q ? `?${q}` : ""}`,
-  );
+): Promise<{ updates: BufferPost[]; total: number }> {
+  const result = await listPosts(channelId, { status: "pending", first: params?.count ?? 20 });
+  return { updates: result.posts, total: result.posts.length };
 }
 
 export async function getSentUpdates(
-  profileId: string,
+  channelId: string,
   params?: { page?: number; count?: number },
-): Promise<UpdatesResponse> {
-  const qs = new URLSearchParams();
-  if (params?.page) qs.set("page", String(params.page));
-  if (params?.count) qs.set("count", String(params.count));
-  const q = qs.toString();
-  return request<UpdatesResponse>(
-    `/profiles/${profileId}/updates/sent.json${q ? `?${q}` : ""}`,
+): Promise<{ updates: BufferPost[]; total: number }> {
+  const result = await listPosts(channelId, { status: "sent", first: params?.count ?? 20 });
+  return { updates: result.posts, total: result.posts.length };
+}
+
+export async function getPost(postId: string): Promise<BufferPost> {
+  const data = await gql<{ post: BufferPost }>(
+    `query GetPost($input: PostInput!) {
+      post(input: $input) {
+        id
+        text
+        status
+        createdAt
+        dueAt
+        channelId
+      }
+    }`,
+    { input: { id: postId } },
   );
+  return data.post;
 }
 
-export async function getUpdate(updateId: string): Promise<BufferUpdate> {
-  return request<BufferUpdate>(`/updates/${updateId}.json`);
+// Backward-compat alias
+export const getUpdate = getPost;
+
+export interface CreatePostInput {
+  channelId: string;
+  text: string;
+  dueAt?: string;
+  now?: boolean;
 }
 
-export interface CreateUpdateInput {
+// Backward-compat alias
+export type CreateUpdateInput = {
   profile_ids: string[];
   text?: string;
-  media?: { link?: string; photo?: string; thumbnail?: string; description?: string; title?: string };
+  media?: Record<string, string>;
   scheduled_at?: string;
   now?: boolean;
   top?: boolean;
+};
+
+export async function createPost(input: CreatePostInput): Promise<{ success: boolean; post: BufferPost }> {
+  const mutationInput: Record<string, unknown> = {
+    channelId: input.channelId,
+    text: input.text,
+  };
+  if (input.dueAt) mutationInput.dueAt = input.dueAt;
+  if (input.now) mutationInput.mode = "shareNow";
+  else if (input.dueAt) mutationInput.mode = "customScheduled";
+  else mutationInput.mode = "addToQueue";
+
+  const data = await gql<{ createPost: { post: BufferPost } }>(
+    `mutation CreatePost($input: CreatePostInput!) {
+      createPost(input: $input) {
+        post {
+          id
+          text
+          status
+          createdAt
+          dueAt
+          channelId
+        }
+      }
+    }`,
+    { input: mutationInput },
+  );
+  return { success: true, post: data.createPost.post };
 }
 
-export async function createUpdate(input: CreateUpdateInput): Promise<{ success: boolean; updates: BufferUpdate[] }> {
-  const body = new URLSearchParams();
-  for (const id of input.profile_ids) {
-    body.append("profile_ids[]", id);
+// Backward-compat wrapper: accepts old-style profile_ids[] input
+export async function createUpdate(
+  input: CreateUpdateInput,
+): Promise<{ success: boolean; updates: BufferPost[] }> {
+  const posts: BufferPost[] = [];
+  for (const channelId of input.profile_ids) {
+    const result = await createPost({
+      channelId,
+      text: input.text ?? "",
+      dueAt: input.scheduled_at,
+      now: input.now,
+    });
+    posts.push(result.post);
   }
-  if (input.text) body.set("text", input.text);
-  if (input.scheduled_at) body.set("scheduled_at", input.scheduled_at);
-  if (input.now) body.set("now", "true");
-  if (input.top) body.set("top", "true");
-  if (input.media) {
-    for (const [k, v] of Object.entries(input.media)) {
-      if (v) body.set(`media[${k}]`, v);
-    }
-  }
-  return request(`/updates/create.json`, { method: "POST", body: body.toString() });
+  return { success: true, updates: posts };
 }
 
-export interface EditUpdateInput {
-  text: string;
-  media?: { link?: string; photo?: string; thumbnail?: string; description?: string; title?: string };
-  scheduled_at?: string;
-  now?: boolean;
+export async function deletePost(postId: string): Promise<{ success: boolean }> {
+  await gql<{ deletePost: { success: boolean } }>(
+    `mutation DeletePost($input: DeletePostInput!) {
+      deletePost(input: $input) {
+        success
+      }
+    }`,
+    { input: { id: postId } },
+  );
+  return { success: true };
 }
 
+// Backward-compat alias
+export const deleteUpdate = deletePost;
+
+// Note: editUpdate and shareUpdate are not supported in the new Buffer API beta.
+// editUpdate will throw; shareUpdate is replaced by createPost with mode "shareNow".
 export async function editUpdate(
-  updateId: string,
-  input: EditUpdateInput,
-): Promise<{ success: boolean; update: BufferUpdate }> {
-  const body = new URLSearchParams();
-  body.set("text", input.text);
-  if (input.scheduled_at) body.set("scheduled_at", input.scheduled_at);
-  if (input.now) body.set("now", "true");
-  if (input.media) {
-    for (const [k, v] of Object.entries(input.media)) {
-      if (v) body.set(`media[${k}]`, v);
-    }
-  }
-  return request(`/updates/${updateId}/update.json`, { method: "POST", body: body.toString() });
-}
-
-export async function deleteUpdate(updateId: string): Promise<{ success: boolean }> {
-  return request(`/updates/${updateId}/destroy.json`, { method: "POST" });
+  _updateId: string,
+  _input: { text: string; media?: Record<string, string>; scheduled_at?: string; now?: boolean },
+): Promise<{ success: boolean; update: BufferPost }> {
+  throw new Error("Editing posts is not yet supported by the new Buffer API. Delete and recreate instead.");
 }
 
 export async function shareUpdate(updateId: string): Promise<{ success: boolean }> {
-  return request(`/updates/${updateId}/share.json`, { method: "POST" });
+  // In the new API, there's no separate "share" action.
+  // Posts are published based on their mode (shareNow, addToQueue, etc.)
+  throw new Error(
+    `Share action is not supported in the new Buffer API. Post ${updateId} should be created with mode "shareNow" instead.`,
+  );
 }
