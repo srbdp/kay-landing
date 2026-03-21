@@ -180,10 +180,8 @@ export function ROICalculator() {
       setSubmitMessage(data.message);
       setUnlocked(true);
     } catch {
-      // API unavailable (e.g. static hosting) — still unlock results
-      setSubmitStatus("success");
-      setSubmitMessage("Report unlocked!");
-      setUnlocked(true);
+      setSubmitStatus("error");
+      setSubmitMessage("Unable to reach sign-up service. Please try again.");
     }
   }
 
