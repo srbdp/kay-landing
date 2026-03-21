@@ -2,6 +2,9 @@
 
 import { useState, useMemo } from "react";
 
+const WEB3FORMS_URL = "https://api.web3forms.com/submit";
+const WEB3FORMS_KEY = process.env.NEXT_PUBLIC_WEB3FORMS_KEY;
+
 interface Inputs {
   monthlyTickets: number;
   ticketsPerAgent: number;
@@ -161,23 +164,34 @@ export function ROICalculator() {
     e.preventDefault();
     setSubmitStatus("loading");
 
+    if (!WEB3FORMS_KEY) {
+      setSubmitStatus("error");
+      setSubmitMessage("Sign-up service is not configured.");
+      return;
+    }
+
     try {
-      const res = await fetch("/api/signup", {
+      const res = await fetch(WEB3FORMS_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, source: "roi_calculator" }),
+        body: JSON.stringify({
+          access_key: WEB3FORMS_KEY,
+          email,
+          subject: "New waitlist signup — Kay ROI calculator",
+          from_name: "Kay Waitlist",
+        }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
+      if (!res.ok || !data.success) {
         setSubmitStatus("error");
-        setSubmitMessage(data.error || "Something went wrong.");
+        setSubmitMessage(data.message || "Something went wrong.");
         return;
       }
 
       setSubmitStatus("success");
-      setSubmitMessage(data.message);
+      setSubmitMessage("Report unlocked!");
       setUnlocked(true);
     } catch {
       setSubmitStatus("error");
