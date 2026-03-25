@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 
-const WEB3FORMS_URL = "https://api.web3forms.com/submit";
-const WEB3FORMS_KEY = process.env.NEXT_PUBLIC_WEB3FORMS_KEY;
+const FORMSUBMIT_EMAIL = process.env.NEXT_PUBLIC_FORMSUBMIT_EMAIL;
 
 export function SignupForm() {
   const [email, setEmail] = useState("");
@@ -14,27 +13,25 @@ export function SignupForm() {
     e.preventDefault();
     setStatus("loading");
 
-    if (!WEB3FORMS_KEY) {
+    if (!FORMSUBMIT_EMAIL) {
       setStatus("error");
       setMessage("Sign-up service is not configured.");
       return;
     }
 
     try {
-      const res = await fetch(WEB3FORMS_URL, {
+      const res = await fetch(`https://formsubmit.co/ajax/${FORMSUBMIT_EMAIL}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          access_key: WEB3FORMS_KEY,
           email,
-          subject: "New waitlist signup — Kay landing page",
-          from_name: "Kay Waitlist",
+          _subject: "New waitlist signup — Kay landing page",
         }),
       });
 
       const data = await res.json();
 
-      if (!res.ok || !data.success) {
+      if (!res.ok || data.success === "false") {
         setStatus("error");
         setMessage(data.message || "Something went wrong.");
         return;
