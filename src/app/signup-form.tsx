@@ -26,6 +26,23 @@ export function SignupForm() {
         body: JSON.stringify({
           email,
           _subject: "New waitlist signup — Kay landing page",
+          _autoresponse: [
+            "hey --",
+            "",
+            "you're probably drowning in AI vendor emails right now so i'll be quick.",
+            "",
+            "most AI support tools handle Level 1 -- password resets, order status, FAQ stuff. every vendor does that. it's not interesting anymore.",
+            "",
+            "Level 2 is the problem. conversations that need product knowledge, context, actual judgment. that's where your team is stuck, and where most AI taps out.",
+            "",
+            "Kay resolves 40% of Level 2 conversations. plugs into whatever helpdesk you're already running -- Zendesk, Freshdesk, Intercom, Salesforce. no migration. live in days.",
+            "",
+            "if you want to see the math for your ticket volume, the ROI calculator is here:",
+            "",
+            "https://srbdp.github.io/kay-landing/roi",
+            "",
+            "-- brandon",
+          ].join("\n"),
         }),
       });
 
