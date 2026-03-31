@@ -6,6 +6,22 @@ export const metadata: Metadata = {
   title: "ROI Calculator - Kay",
   description:
     "See how much you could save with Kay's AI-powered customer support. Calculate your cost per ticket, monthly savings, and payback period.",
+  openGraph: {
+    title: "ROI Calculator - Kay",
+    description:
+      "See how much you could save with Kay's AI-powered customer support. Calculate your cost per ticket, monthly savings, and payback period.",
+    url: "https://srbdp.github.io/kay-landing/roi",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "ROI Calculator - Kay",
+    description:
+      "See how much you could save with Kay's AI-powered customer support.",
+  },
+  alternates: {
+    canonical: "https://srbdp.github.io/kay-landing/roi",
+  },
 };
 
 export default function ROIPage() {

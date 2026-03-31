@@ -1,0 +1,14 @@
+# Kay
+
+> Kay is an AI employee for customer support that resolves tickets end-to-end.
+
+Kay resolves support tickets autonomously — not just triage, but full resolution including Level 2 conversations that require product knowledge and judgment. It integrates with Zendesk, Freshdesk, Intercom, and Salesforce in minutes with no migration required.
+
+## Pricing
+
+Pay per resolution: $1 per resolved ticket. Zero tickets resolved means zero cost. No contracts, cancel anytime.
+
+## Pages
+
+- [Home](https://srbdp.github.io/kay-landing/): Landing page with product overview and waitlist signup
+- [ROI Calculator](https://srbdp.github.io/kay-landing/roi): Interactive calculator showing projected savings based on your ticket volume

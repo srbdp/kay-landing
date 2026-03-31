@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://srbdp.github.io/kay-landing/sitemap.xml
