@@ -1,0 +1,62 @@
+{
+  "_note": "ALL 99 companies in targets.json currently use generic support@ emails. Before launching outbound, the board must enrich each contact with a real CX/Support leader name and verified email address. Tools: LinkedIn Sales Navigator, Apollo.io, or ZoomInfo. Priority companies are listed first.",
+  "priority_targets": [
+    {
+      "company": "Vanta",
+      "website": "vanta.com",
+      "why_priority": "12K customers, 40% of staff in Sales & Support, strongest ICP fit",
+      "lead_hints": "Look for VP/Director of Customer Support — ~320 people in S&S function"
+    },
+    {
+      "company": "Drata",
+      "website": "drata.com",
+      "why_priority": "7K+ customers, compliance automation, fast-growing support needs",
+      "lead_hints": "Look for Head of Customer Support or VP CX"
+    },
+    {
+      "company": "Notion",
+      "website": "notion.so",
+      "why_priority": "100M+ users, $500M ARR, 219 people in Sales & Support",
+      "lead_hints": "Large support org — look for VP of Support or Head of Customer Experience"
+    },
+    {
+      "company": "Vercel",
+      "website": "vercel.com",
+      "why_priority": "Active Zendesk user, hiring Director of CS, strong migration candidate",
+      "lead_hints": "Actively hiring Director, Customer Success — check recent LinkedIn posts"
+    },
+    {
+      "company": "Calendly",
+      "website": "calendly.com",
+      "why_priority": "Profitable, $270M ARR, 10M+ customers, PLG + enterprise",
+      "lead_hints": "Look for Director/VP of Support"
+    }
+  ],
+  "all_companies_needing_enrichment": [
+    "Vercel", "Notion", "Calendly", "Ironclad", "Drata",
+    "Vanta", "Persona", "Algolia", "ElevenLabs", "Retool",
+    "n8n", "Hightouch", "Clay", "Replit", "Cohere",
+    "Runway", "Jasper", "Ashby", "Hex", "Supabase",
+    "Monte Carlo", "Typeface", "Sanity", "Harvey AI", "Linear",
+    "Webflow", "Lattice", "Airtable", "ClickUp", "Coda",
+    "Sentry", "LaunchDarkly", "PostHog", "Temporal", "Kong",
+    "Cribl", "Airbyte", "Mixpanel", "Pinecone", "Neon",
+    "Semgrep", "Labelbox", "Rudderstack", "Grammarly", "Render",
+    "PlanetScale", "Weaviate", "Anyscale", "Together AI", "Replicate",
+    "Oyster HR", "Leapsome", "Awardco", "Culture Amp", "Chainguard",
+    "1Password", "Orca Security", "Tines", "Huntress", "Abnormal Security",
+    "Island", "Apollo.io", "Clari", "6sense", "Pendo",
+    "Sierra AI", "Decagon", "Ada", "Forethought", "Observe.ai",
+    "Assembled", "Talkdesk", "Qualified", "Scale AI", "Plaid",
+    "Modern Treasury", "Melio", "Rho", "Carta", "Owner.com",
+    "Podium", "Dutchie", "Clio", "Contentful", "Synthesia",
+    "Descript", "Copy.ai", "Otter.ai", "Fireflies.ai", "Zip",
+    "Workato", "Harness", "Iterable", "Guru", "Secureframe",
+    "Incident.io", "Capchase", "Attentive", "Unit"
+  ],
+  "enrichment_instructions": {
+    "target_roles": ["Head of Customer Support", "VP of Customer Support", "Director of Customer Experience", "VP of CX", "Head of Support Operations"],
+    "email_sources": ["LinkedIn Sales Navigator", "Apollo.io", "ZoomInfo", "Hunter.io", "company careers page"],
+    "validation": "After enriching, update cold-outbound/data/targets.json with real firstName and email for each company. Then re-run: npx tsx src/index.ts --dry-run"
+  }
+}
