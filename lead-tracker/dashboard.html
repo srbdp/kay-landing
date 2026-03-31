@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lead Pipeline Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; padding: 24px; }
+  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 24px; color: #f8fafc; }
+  h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .card { background: #1e293b; border-radius: 8px; padding: 20px; border: 1px solid #334155; }
+  .metric { font-size: 2rem; font-weight: 700; color: #f8fafc; }
+  .metric-label { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
+  .pipeline { margin-bottom: 24px; }
+  .stage-row { display: flex; align-items: center; margin-bottom: 8px; }
+  .stage-label { width: 140px; font-size: 0.9rem; color: #94a3b8; }
+  .stage-bar { height: 24px; border-radius: 4px; min-width: 2px; transition: width 0.3s; display: flex; align-items: center; padding-left: 8px; font-size: 0.8rem; font-weight: 600; }
+  .stage-count { margin-left: 8px; font-size: 0.85rem; color: #64748b; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: left; padding: 8px 12px; color: #64748b; border-bottom: 1px solid #334155; font-weight: 500; }
+  td { padding: 8px 12px; border-bottom: 1px solid #1e293b; }
+  tr:hover td { background: #1e293b; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .badge-outbound { background: #1e3a5f; color: #60a5fa; }
+  .badge-linkedin { background: #1e3a2f; color: #34d399; }
+  .badge-inbound { background: #3b1e5f; color: #a78bfa; }
+  .badge-new { background: #334155; color: #94a3b8; }
+  .badge-contacted { background: #1e3a5f; color: #60a5fa; }
+  .badge-replied { background: #1e3a2f; color: #34d399; }
+  .badge-meeting_booked { background: #3b2e1e; color: #fbbf24; }
+  .badge-proposal_sent { background: #3b1e3b; color: #f472b6; }
+  .badge-won { background: #064e3b; color: #10b981; }
+  .badge-lost { background: #450a0a; color: #f87171; }
+  .stale-tag { color: #f87171; font-weight: 600; }
+  .empty { text-align: center; padding: 40px; color: #475569; }
+  #error { background: #450a0a; color: #fca5a5; padding: 16px; border-radius: 8px; margin-bottom: 16px; display: none; }
+  .source-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+  .source-card { background: #1e293b; border-radius: 8px; padding: 16px 24px; border: 1px solid #334155; text-align: center; min-width: 120px; }
+  .source-count { font-size: 1.5rem; font-weight: 700; }
+</style>
+</head>
+<body>
+<h1>Lead Pipeline Dashboard</h1>
+<div id="error"></div>
+<div id="app"><div class="empty">Loading... Run <code>npx tsx src/cli.ts export-json</code> to generate data.</div></div>
+
+<script>
+const STAGE_ORDER = ['new', 'contacted', 'replied', 'meeting_booked', 'proposal_sent', 'won', 'lost'];
+const STAGE_LABELS = { new: 'New', contacted: 'Contacted', replied: 'Replied', meeting_booked: 'Meeting Booked', proposal_sent: 'Proposal Sent', won: 'Won', lost: 'Lost' };
+const STAGE_COLORS = { new: '#475569', contacted: '#3b82f6', replied: '#10b981', meeting_booked: '#f59e0b', proposal_sent: '#ec4899', won: '#059669', lost: '#dc2626' };
+
+async function loadData() {
+  try {
+    const res = await fetch('data/dashboard.json');
+    if (!res.ok) throw new Error('Run: npx tsx src/cli.ts export-json');
+    return await res.json();
+  } catch (e) {
+    document.getElementById('error').textContent = 'Could not load data/dashboard.json. ' + e.message;
+    document.getElementById('error').style.display = 'block';
+    return null;
+  }
+}
+
+function render(data) {
+  const maxStageCount = Math.max(...Object.values(data.stageCounts), 1);
+
+  const pipelineRows = STAGE_ORDER.map(stage => {
+    const count = data.stageCounts[stage] || 0;
+    const width = Math.max((count / maxStageCount) * 100, count > 0 ? 8 : 0);
+    return `<div class="stage-row">
+      <span class="stage-label">${STAGE_LABELS[stage]}</span>
+      <div class="stage-bar" style="width:${width}%;background:${STAGE_COLORS[stage]}">${count > 0 ? count : ''}</div>
+      ${count === 0 ? '<span class="stage-count">0</span>' : ''}
+    </div>`;
+  }).join('');
+
+  const sourceCounts = data.sourceCounts || {};
+  const sourceCards = Object.entries(sourceCounts).map(([source, count]) =>
+    `<div class="source-card">
+      <div class="source-count">${count}</div>
+      <div class="metric-label">${source}</div>
+    </div>`
+  ).join('');
+
+  const leadRows = (data.leads || []).map(lead => {
+    const daysSince = Math.floor((Date.now() - new Date(lead.lastContactDate).getTime()) / 86400000);
+    const isStale = daysSince >= 7 && lead.stage !== 'won' && lead.stage !== 'lost';
+    return `<tr>
+      <td>${lead.id}</td>
+      <td><strong>${lead.company}</strong></td>
+      <td>${lead.contactName}${lead.title ? '<br><small style="color:#64748b">' + lead.title + '</small>' : ''}</td>
+      <td>${lead.email}</td>
+      <td><span class="badge badge-${lead.source}">${lead.source}</span></td>
+      <td><span class="badge badge-${lead.stage}">${STAGE_LABELS[lead.stage]}</span></td>
+      <td>${lead.lastContactDate.split('T')[0]} ${isStale ? '<span class="stale-tag">STALE</span>' : ''}</td>
+    </tr>`;
+  }).join('');
+
+  const wonCount = data.stageCounts.won || 0;
+  const lostCount = data.stageCounts.lost || 0;
+  const winRate = (wonCount + lostCount) > 0 ? Math.round((wonCount / (wonCount + lostCount)) * 100) : 0;
+
+  document.getElementById('app').innerHTML = `
+    <div class="grid">
+      <div class="card"><div class="metric">${data.totalLeads}</div><div class="metric-label">Total Leads</div></div>
+      <div class="card"><div class="metric">${data.activeLeads}</div><div class="metric-label">Active Pipeline</div></div>
+      <div class="card"><div class="metric">${wonCount}</div><div class="metric-label">Won</div></div>
+      <div class="card"><div class="metric">${winRate}%</div><div class="metric-label">Win Rate</div></div>
+      <div class="card"><div class="metric">${(data.staleLeads || []).length}</div><div class="metric-label">Stale (7+ days)</div></div>
+    </div>
+
+    <div class="card pipeline">
+      <h2>Pipeline</h2>
+      ${pipelineRows}
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <h2>By Source</h2>
+      <div class="source-grid">${sourceCards || '<div class="empty">No leads</div>'}</div>
+    </div>
+
+    <div class="card">
+      <h2>All Leads</h2>
+      <table>
+        <thead><tr><th>ID</th><th>Company</th><th>Contact</th><th>Email</th><th>Source</th><th>Stage</th><th>Last Contact</th></tr></thead>
+        <tbody>${leadRows || '<tr><td colspan="7" class="empty">No leads</td></tr>'}</tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:16px;text-align:center;color:#475569;font-size:0.8rem">
+      Generated ${data.generatedAt ? new Date(data.generatedAt).toLocaleString() : 'N/A'}
+    </div>
+  `;
+}
+
+loadData().then(data => { if (data) render(data); });
+</script>
+</body>
+</html>
