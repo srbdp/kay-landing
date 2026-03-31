@@ -176,38 +176,60 @@ export async function createPost(input: CreatePostInput): Promise<{ success: boo
   const mutationInput: Record<string, unknown> = {
     channelId: input.channelId,
     text: input.text,
+    schedulingType: "automatic",
   };
   if (input.dueAt) mutationInput.dueAt = input.dueAt;
   if (input.now) mutationInput.mode = "shareNow";
   else if (input.dueAt) mutationInput.mode = "customScheduled";
   else mutationInput.mode = "addToQueue";
 
-  const data = await gql<{ createPost: { post: BufferPost } }>(
+  const data = await gql<{
+    createPost:
+      | { post: BufferPost }
+      | { message: string };
+  }>(
     `mutation CreatePost($input: CreatePostInput!) {
       createPost(input: $input) {
-        post {
-          id
-          text
-          status
-          createdAt
-          dueAt
-          channelId
+        ... on PostActionSuccess {
+          post {
+            id
+            text
+            status
+            createdAt
+            dueAt
+            channelId
+          }
         }
+        ... on InvalidInputError { message }
+        ... on UnexpectedError { message }
+        ... on UnauthorizedError { message }
+        ... on LimitReachedError { message }
+        ... on RestProxyError { message }
+        ... on NotFoundError { message }
       }
     }`,
     { input: mutationInput },
   );
+  if ("message" in data.createPost) {
+    throw new Error(`Buffer createPost failed: ${data.createPost.message}`);
+  }
   return { success: true, post: data.createPost.post };
 }
 
 export async function deletePost(postId: string): Promise<{ success: boolean }> {
-  await gql<{ deletePost: { success: boolean } }>(
+  const data = await gql<{
+    deletePost: { __typename: string };
+  }>(
     `mutation DeletePost($input: DeletePostInput!) {
       deletePost(input: $input) {
-        success
+        ... on DeletePostSuccess { __typename }
+        ... on VoidMutationError { __typename }
       }
     }`,
     { input: { id: postId } },
   );
+  if (data.deletePost.__typename === "VoidMutationError") {
+    throw new Error("Buffer deletePost failed");
+  }
   return { success: true };
 }
