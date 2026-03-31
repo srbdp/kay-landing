@@ -61,7 +61,7 @@ https://srbdp.github.io/kay-landing/?utm_source=email&utm_medium=autoresponder&u
 
 ## Email 2: Value Proof (send Day 3 after signup)
 
-**Delivery:** Manual from Gmail. See process below.
+**Delivery:** Automatic via nurture drip service (`kay-nurture-drip.fly.dev`). Sent 3 days after signup.
 
 **Subject:** "we tried AI support and it didn't work"
 
@@ -85,7 +85,7 @@ https://srbdp.github.io/kay-landing/?utm_source=email&utm_medium=autoresponder&u
 
 ## Email 3: Urgency / Scarcity (send Day 7 after signup)
 
-**Delivery:** Manual from Gmail. See process below.
+**Delivery:** Automatic via nurture drip service (`kay-nurture-drip.fly.dev`). Sent 7 days after signup.
 
 **Subject:** 5 pilot spots left for Q2
 
@@ -105,18 +105,32 @@ https://srbdp.github.io/kay-landing/?utm_source=email&utm_medium=autoresponder&u
 
 ---
 
-## Manual Send Process (Emails 2 and 3)
+## Automated Drip Service
 
-Until we set up a proper ESP with automation:
+Emails 2 and 3 are sent automatically by the `kay-nurture-drip` service on Fly.io.
 
-1. **When a new signup comes in**, Formsubmit forwards the notification to brandon.pizzacalla@trilogy.com. Note the signup date and email address.
-2. **Day 3:** Send Email 2 from Gmail using the template above. Subject: `"we tried AI support and it didn't work"`
-3. **Day 7:** Send Email 3 from Gmail using the template above. Subject: `5 pilot spots left for Q2`
-4. Replace `[Demo booking link]` and `[Booking link]` with the actual Calendly/booking URL once available.
+### How it works
 
-### Tracking
+1. When a lead signs up on the landing page or ROI calculator, the form POSTs to both Formsubmit (Email 1 autoresponse) and the drip webhook (`https://kay-nurture-drip.fly.dev/webhook`).
+2. The drip service stores the lead in a SQLite database with the signup timestamp.
+3. An hourly cron job checks for leads needing Email 2 (3+ days since signup) or Email 3 (7+ days, after Email 2 sent).
+4. Emails are sent via Resend (if `RESEND_API_KEY` is configured) or Formsubmit fallback.
 
-Keep a simple spreadsheet or note with columns: `Email | Signup Date | Email 2 Sent | Email 3 Sent`
+### Admin endpoints
+
+- `GET /health` — service health check
+- `GET /leads` — list all leads and their email status
+- `POST /check` — manually trigger the drip check
+- `POST /webhook` — register a new lead (body: `{ "email": "..." }`)
+
+### Upgrading to Resend
+
+To send emails with proper from-address and custom subjects:
+
+1. Create a free Resend account at resend.com
+2. Generate an API key
+3. Set it on Fly.io: `fly secrets set RESEND_API_KEY=re_xxx -a kay-nurture-drip`
+4. Optionally verify a domain and set: `fly secrets set FROM_EMAIL="Brandon <brandon@yourdomain.com>" -a kay-nurture-drip`
 
 ---
 
@@ -150,12 +164,12 @@ this is what we built Kayako for. plugs into your existing helpdesk, covers nigh
 
 ---
 
-## Next Step: ESP Automation
+## Future: Full ESP Migration
 
-When volume justifies it, migrate to a proper ESP for full automation:
+When volume exceeds Resend free tier (100 emails/day), consider migrating to a full ESP:
 
-- **Mailchimp free tier**: 500 contacts, 1,000 emails/month. Has Customer Journey builder for drip sequences. Replace Formsubmit with Mailchimp embedded form or API.
-- **Kit (ConvertKit) free tier**: 10,000 subscribers. Visual automation builder. More generous free tier.
+- **Kit (ConvertKit) free tier**: 10,000 subscribers. Visual automation builder.
 - **Loops**: Built for SaaS. Simple drip sequences. Free up to 1,000 contacts.
+- **Mailchimp free tier**: 500 contacts, 1,000 emails/month.
 
-Recommendation: Kit (ConvertKit) -- most generous free tier, simple automation, good for low-volume SaaS.
+The current architecture (Fly.io + SQLite + Resend) handles low-to-medium volume reliably.

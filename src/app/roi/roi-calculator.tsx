@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { trackEvent } from "@/lib/analytics";
 
 const FORMSUBMIT_EMAIL = process.env.NEXT_PUBLIC_FORMSUBMIT_EMAIL;
+const DRIP_WEBHOOK_URL = "https://kay-nurture-drip.fly.dev/webhook";
 
 interface Inputs {
   monthlyTickets: number;
@@ -209,6 +210,13 @@ export function ROICalculator() {
       setSubmitMessage("Report unlocked!");
       setUnlocked(true);
       trackEvent("Waitlist Signup", { source: "roi-calculator" });
+
+      // Register lead in drip sequence for automated follow-up emails
+      fetch(DRIP_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      }).catch(() => {});
     } catch {
       setSubmitStatus("error");
       setSubmitMessage("Unable to reach sign-up service. Please try again.");
