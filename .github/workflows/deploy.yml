@@ -29,6 +29,7 @@ jobs:
           PAGES_BASE_PATH: /kay-landing
           NEXT_PUBLIC_FORMSUBMIT_EMAIL: ${{ secrets.NEXT_PUBLIC_FORMSUBMIT_EMAIL }}
           NEXT_PUBLIC_PLAUSIBLE_DOMAIN: srbdp.github.io
+          NEXT_PUBLIC_NURTURE_WEBHOOK_URL: https://kay-nurture-drip.fly.dev/webhook
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out

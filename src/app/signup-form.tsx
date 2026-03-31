@@ -4,7 +4,9 @@ import { useState } from "react";
 import { trackEvent } from "@/lib/analytics";
 
 const FORMSUBMIT_EMAIL = process.env.NEXT_PUBLIC_FORMSUBMIT_EMAIL;
-const DRIP_WEBHOOK_URL = "https://kay-nurture-drip.fly.dev/webhook";
+const NURTURE_WEBHOOK_URL =
+  process.env.NEXT_PUBLIC_NURTURE_WEBHOOK_URL ||
+  "https://kay-nurture-drip.fly.dev/webhook";
 
 export function SignupForm() {
   const [email, setEmail] = useState("");
@@ -58,15 +60,16 @@ export function SignupForm() {
 
       setStatus("success");
       setMessage("You're in! We'll be in touch.");
-      setEmail("");
       trackEvent("Waitlist Signup", { source: "homepage" });
 
-      // Register lead in drip sequence for automated follow-up emails
-      fetch(DRIP_WEBHOOK_URL, {
+      // Fire nurture drip webhook (fire-and-forget)
+      fetch(NURTURE_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       }).catch(() => {});
+
+      setEmail("");
     } catch {
       setStatus("error");
       setMessage("Unable to reach sign-up service. Please try again.");
