@@ -190,7 +190,7 @@ export function ROICalculator() {
             "",
             "if you want to see the math for your ticket volume, the ROI calculator is here:",
             "",
-            "https://srbdp.github.io/kay-landing/roi",
+            "https://srbdp.github.io/kay-landing/roi?utm_source=email&utm_medium=autoresponder&utm_campaign=nurture&utm_content=email1-welcome",
             "",
             "-- brandon",
           ].join("\n"),

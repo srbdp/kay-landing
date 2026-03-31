@@ -1,6 +1,39 @@
-# Kay Nurture Email Sequence
+# Kay Nurture Sequence
 
 Approved copy from CAN-25 (Option A, attributed SaaStr version). CEO approved March 25.
+
+---
+
+## UTM Tracking Convention
+
+All outbound links to the landing page or ROI calculator must include UTM parameters so Plausible Analytics can attribute traffic to the correct source.
+
+**Base URLs:**
+- Landing page: `https://srbdp.github.io/kay-landing/`
+- ROI calculator: `https://srbdp.github.io/kay-landing/roi`
+
+**UTM parameters:**
+
+| Parameter      | Value                                                                 |
+|----------------|-----------------------------------------------------------------------|
+| `utm_source`   | Channel: `linkedin`, `email`, `twitter`                               |
+| `utm_medium`   | Distribution type: `organic`, `autoresponder`, `manual-email`         |
+| `utm_campaign` | Time period: `week1`, `week2`, `week3`, etc.                          |
+| `utm_content`  | Specific asset: `post3-csat`, `post4-nightshift`, `email1-welcome`    |
+
+**Examples:**
+```
+https://srbdp.github.io/kay-landing/roi?utm_source=linkedin&utm_medium=organic&utm_campaign=week2&utm_content=post3-csat
+https://srbdp.github.io/kay-landing/?utm_source=email&utm_medium=autoresponder&utm_campaign=nurture&utm_content=email1-welcome
+```
+
+**Rules:**
+- Always lowercase, no spaces (use hyphens)
+- `utm_content` format for LinkedIn: `post{N}-{short-topic}`
+- `utm_content` format for email: `email{N}-{short-topic}`
+- New weeks increment `utm_campaign` (week4, week5, etc.)
+
+---
 
 ## Email 1: Welcome (sent immediately on signup)
 
@@ -20,7 +53,7 @@ Approved copy from CAN-25 (Option A, attributed SaaStr version). CEO approved Ma
 >
 > if you want to see the math for your ticket volume, the ROI calculator is here:
 >
-> https://srbdp.github.io/kay-landing/roi
+> https://srbdp.github.io/kay-landing/roi?utm_source=email&utm_medium=autoresponder&utm_campaign=nurture&utm_content=email1-welcome
 >
 > -- brandon
 
@@ -84,6 +117,36 @@ Until we set up a proper ESP with automation:
 ### Tracking
 
 Keep a simple spreadsheet or note with columns: `Email | Signup Date | Email 2 Sent | Email 3 Sent`
+
+---
+
+## LinkedIn First-Comment Templates
+
+First comments are posted manually by Brandon immediately after Buffer publishes each CTA post.
+
+### Week 2 (Mar 31 - Apr 4)
+
+**Post 3 — Wed 4/2 "The CSAT Paradox" → ROI calculator:**
+```
+here's the calculator -- takes about 2 minutes. plug in your ticket volume and response times and see what the numbers look like for your team. https://srbdp.github.io/kay-landing/roi?utm_source=linkedin&utm_medium=organic&utm_campaign=week2&utm_content=post3-csat
+```
+
+**Post 4 — Thu 4/3 "Three Days" → Landing page:**
+```
+this is what we built Kayako for. plugs into your existing helpdesk, no migration. most teams go live in days. https://srbdp.github.io/kay-landing/?utm_source=linkedin&utm_medium=organic&utm_campaign=week2&utm_content=post4-threedays
+```
+
+### Week 3 (Apr 7 - Apr 11)
+
+**Post 3 — Wed 4/9 "When Customers Prefer AI" → ROI calculator:**
+```
+here's the calculator: https://srbdp.github.io/kay-landing/roi?utm_source=linkedin&utm_medium=organic&utm_campaign=week3&utm_content=post3-split -- plug in your ticket volume by category and see where AI actually helps vs where it hurts.
+```
+
+**Post 4 — Thu 4/10 "The Night Shift Problem" → Landing page:**
+```
+this is what we built Kayako for. plugs into your existing helpdesk, covers nights and weekends, no migration required. https://srbdp.github.io/kay-landing/?utm_source=linkedin&utm_medium=organic&utm_campaign=week3&utm_content=post4-nightshift
+```
 
 ---
 
