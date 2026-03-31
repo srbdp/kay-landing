@@ -1,0 +1,4 @@
+node_modules/
+dist/
+data/send-state.json
+data/targets.json

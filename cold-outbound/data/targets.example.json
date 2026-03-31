@@ -1,0 +1,62 @@
+[
+  {
+    "company": "Vanta",
+    "website": "vanta.com",
+    "firstName": "Sarah",
+    "email": "sarah@vanta.com",
+    "title": "Head of Support",
+    "employees": "500",
+    "fundingStage": "Series C",
+    "estArr": "$100M+",
+    "currentHelpdesk": "Zendesk",
+    "personalization": "Series C, 500 employees, compliance automation scaling fast with SOC 2 demand."
+  },
+  {
+    "company": "Webflow",
+    "website": "webflow.com",
+    "firstName": "Mike",
+    "email": "mike@webflow.com",
+    "title": "VP of Customer Experience",
+    "employees": "600",
+    "fundingStage": "Series C",
+    "estArr": "$213M",
+    "currentHelpdesk": "",
+    "personalization": "Series C at $4B valuation, 3.5M+ users, strong B2B customer base growing fast."
+  },
+  {
+    "company": "LaunchDarkly",
+    "website": "launchdarkly.com",
+    "firstName": "Jessica",
+    "email": "jessica@launchdarkly.com",
+    "title": "Director of Support",
+    "employees": "623",
+    "fundingStage": "Series D",
+    "estArr": "$200M",
+    "currentHelpdesk": "",
+    "personalization": "Series D at $3B, 623 employees, adding CTO and CFO roles to drive AI growth."
+  },
+  {
+    "company": "Sentry",
+    "website": "sentry.io",
+    "firstName": "Alex",
+    "email": "alex@sentry.io",
+    "title": "Head of Customer Support",
+    "employees": "500",
+    "fundingStage": "Series F",
+    "estArr": "$100M+",
+    "currentHelpdesk": "",
+    "personalization": "Series F at $3B, 100K+ organizations using the platform, massive developer community."
+  },
+  {
+    "company": "Airtable",
+    "website": "airtable.com",
+    "firstName": "Jordan",
+    "email": "jordan@airtable.com",
+    "title": "VP Support",
+    "employees": "700",
+    "fundingStage": "Series F",
+    "estArr": "$478M",
+    "currentHelpdesk": "",
+    "personalization": "Series F at $11B, 500K+ orgs including 80% of Fortune 100, low-code platform with AI."
+  }
+]
