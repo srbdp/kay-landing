@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 const FORMSUBMIT_EMAIL = process.env.NEXT_PUBLIC_FORMSUBMIT_EMAIL;
 
@@ -207,6 +208,7 @@ export function ROICalculator() {
       setSubmitStatus("success");
       setSubmitMessage("Report unlocked!");
       setUnlocked(true);
+      trackEvent("Waitlist Signup", { source: "roi-calculator" });
     } catch {
       setSubmitStatus("error");
       setSubmitMessage("Unable to reach sign-up service. Please try again.");

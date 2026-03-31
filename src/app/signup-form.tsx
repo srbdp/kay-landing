@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 const FORMSUBMIT_EMAIL = process.env.NEXT_PUBLIC_FORMSUBMIT_EMAIL;
 
@@ -57,6 +58,7 @@ export function SignupForm() {
       setStatus("success");
       setMessage("You're in! We'll be in touch.");
       setEmail("");
+      trackEvent("Waitlist Signup", { source: "homepage" });
     } catch {
       setStatus("error");
       setMessage("Unable to reach sign-up service. Please try again.");
