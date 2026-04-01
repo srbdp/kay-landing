@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SignupForm } from "./signup-form";
 
 export default function Home() {
@@ -35,7 +36,14 @@ export default function Home() {
           </li>
         </ul>
 
-        <div className="relative mt-10">
+        <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
+          <Link
+            href="/book"
+            className="rounded-lg bg-indigo-600 px-8 py-3 font-medium text-white transition hover:bg-indigo-700"
+          >
+            Book a Demo
+          </Link>
+          <span className="text-sm text-gray-400">or</span>
           <SignupForm />
         </div>
 
